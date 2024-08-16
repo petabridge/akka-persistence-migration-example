@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.MongoDb", "src\App.MongoDb\App.MongoDb.csproj", "{4340C883-78AC-48C4-A1F9-DD1A18BD05D3}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "_", "_", "{BC8393DD-026F-45C0-A061-032EBA68377C}"
+	ProjectSection(SolutionItems) = preProject
+		Directory.Build.props = Directory.Build.props
+		Directory.Packages.props = Directory.Packages.props
+		global.json = global.json
+		start-mongo.ps1 = start-mongo.ps1
+		start-postgres.ps1 = start-postgres.ps1
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.Migration", "src\Akka.Persistence.Migration\Akka.Persistence.Migration.csproj", "{4AF56FC1-3E42-4AAF-B6D6-3916FF212BC0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.Shared", "src\App.Shared\App.Shared.csproj", "{72118505-8AE3-4914-A948-BE6A43A28632}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.PostgreSql", "src\App.PostgreSql\App.PostgreSql.csproj", "{7184F857-69BA-4DDA-8EDB-A86631032EA4}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4340C883-78AC-48C4-A1F9-DD1A18BD05D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4340C883-78AC-48C4-A1F9-DD1A18BD05D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4340C883-78AC-48C4-A1F9-DD1A18BD05D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4340C883-78AC-48C4-A1F9-DD1A18BD05D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4AF56FC1-3E42-4AAF-B6D6-3916FF212BC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4AF56FC1-3E42-4AAF-B6D6-3916FF212BC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4AF56FC1-3E42-4AAF-B6D6-3916FF212BC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4AF56FC1-3E42-4AAF-B6D6-3916FF212BC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{72118505-8AE3-4914-A948-BE6A43A28632}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{72118505-8AE3-4914-A948-BE6A43A28632}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{72118505-8AE3-4914-A948-BE6A43A28632}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{72118505-8AE3-4914-A948-BE6A43A28632}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
