@@ -12,3 +12,4 @@ public sealed record MigrationCompleted(string PersistenceId);
 
 public sealed record MigrationFailed(Exception Cause, string PersistenceId);
 
+public sealed record PersistenceIdMigrationProgress(long SequenceNumber);

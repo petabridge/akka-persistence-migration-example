@@ -1,5 +1,6 @@
 ﻿using Akka.Actor;
 using Akka.Event;
+using Akka.Hosting;
 using Akka.Persistence.Journal;
 using Akka.Persistence.Migration.Messages;
 using Akka.Persistence.MongoDb.Query;
@@ -11,25 +12,21 @@ namespace Akka.Persistence.Migration.Actors;
 
 public class PersistenceIdMigratorActor: ReceivePersistentActor
 {
+    private readonly string _persistenceId;
     private readonly IActorRef _migrationTracker;
-    private SnapshotOffer? _snapshot;
-    private readonly List<object> _recovered = new();
+    private PersistenceIdMigratorState _state = new (NoOffset.Instance, NoOffset.Instance);
     private readonly ILoggingAdapter _log;
+    private EventEnvelope _currentEvent;
 
-    public PersistenceIdMigratorActor(string persistenceId, IActorRef migrationTracker)
+    public PersistenceIdMigratorActor(IActorRef migrationTracker, string persistenceId)
     {
-        PersistenceId = persistenceId;
+        _persistenceId = persistenceId;
+        PersistenceId = $"{_persistenceId}-migrator";
         _migrationTracker = migrationTracker;
         _log = Context.GetLogger();
         
-        Recover<SnapshotOffer>(offer => _snapshot = offer);
-        Recover<RecoveryCompleted>(_ => { });
-        
         Command<EventEnvelope>(env =>
         {
-            var msg = env.Tags.Length > 0 ? new Tagged(env.Event, env.Tags) : env.Event;
-            _log.Info($"Migrating event {env.Event} to {msg}");
-            Persist(msg, _ => { });
         });
         
         Command<MigrationCompleted>(msg =>
@@ -38,13 +35,32 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
             Context.Stop(Self);
         });
         
+        Command<EventPlaybackFailed>(fail =>
+        {
+            
+        });
+        
         Command<MigrationFailed>(msg =>
         {
             _migrationTracker.Tell(msg);
             Context.Stop(Self);
         });
         
-        Recover<object>(obj => _recovered.Add(obj));
+    }
+
+    private void Recovering()
+    {
+        Recover<SnapshotOffer>(offer => _state = (PersistenceIdMigratorState) offer.Snapshot);
+        Recover<RecoveryCompleted>(_ =>
+        {
+            
+        });
+        Recover<PersistenceIdMigratorState>(state => _state = state);
+    }
+
+    private void Migrating()
+    {
+        
     }
     
     public override string PersistenceId { get; }
@@ -55,10 +71,12 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
         queryJournal
             .CurrentEventsByPersistenceId(PersistenceId, 0, long.MaxValue)
             .RunWith(
-                sink: Sink.ActorRef<EventEnvelope>(
+                sink: Sink.ActorRefWithAck<EventEnvelope>(
                     actorRef: Self,
-                    onCompleteMessage: new MigrationCompleted(PersistenceId),
-                    onFailureMessage: ex => new MigrationFailed(ex, PersistenceId)), 
+                    onInitMessage: Initialize.Instance,
+                    ackMessage: EventPersisted.Instance,
+                    onCompleteMessage: EventPlaybackCompleted.Instance,
+                    onFailureMessage: ex => new EventPlaybackFailed(ex)), 
                 materializer: Context.System.Materializer());
     }
 
@@ -82,4 +100,24 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
         _migrationTracker.Tell(new MigrationFailed(reason, PersistenceId));
         Context.Stop(Self);
     }
+    
+    public sealed record PersistenceIdMigratorState(Offset EventOffset, Offset SnapshotOffset);
+
+    public sealed class Initialize
+    {
+        public static readonly Initialize Instance = new();
+        private Initialize() { }
+    }
+    public sealed record EventPersisted
+    {
+        public static readonly EventPersisted Instance = new();
+        private EventPersisted() { }
+    }
+
+    public sealed record EventPlaybackCompleted
+    {
+        public static readonly EventPlaybackCompleted Instance = new();
+        private EventPlaybackCompleted() { }
+    }
+    public sealed record EventPlaybackFailed(Exception Cause);    
 }

@@ -1,52 +1,83 @@
-﻿using Akka;
-using Akka.Actor;
+﻿using Akka.Actor;
 using Akka.Hosting;
-using Akka.Persistence;
+using Akka.Persistence.Migration;
 using Akka.Persistence.Migration.Actors;
+using Akka.Persistence.Migration.Configuration;
 using Akka.Persistence.MongoDb.Hosting;
-using Akka.Persistence.MongoDb.Query;
-using Akka.Persistence.Query;
 using Akka.Persistence.Sql.Hosting;
-using Akka.Streams;
-using Akka.Streams.Dsl;
 using LinqToDB;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+const string postgresConnectionString = "Server=127.0.0.1;Port=5432;Database=akka;User Id=postgres;Password=mysecretpassword;";
+const string mongoDbConnectionString = "mongodb://localhost:27017/akka";
 
 var hostBuilder = Host.CreateDefaultBuilder()
     .ConfigureLogging(builder =>
     {
         builder.AddConsole();
     })
-    .ConfigureServices((_, services) =>
+    .ConfigureServices((ctx, services) =>
     {
-        services.AddAkka("System", (builder, _) =>
-        {
-            builder
-                .ConfigureLoggers(logging =>
-                {
-                    logging.ClearLoggers();
-                    logging.AddLoggerFactory();
-                })
-                .WithMongoDbPersistence(
-                    connectionString: "mongodb://localhost:27017/akka",
-                    isDefaultPlugin: false)
-                .WithSqlPersistence(
-                    connectionString: "Server=127.0.0.1;Port=5432;Database=akka;User Id=postgres;Password=mysecretpassword;", 
-                    providerName: ProviderName.PostgreSQL15, 
-                    isDefaultPlugin: true)
-                .AddHocon("""
-                          akka.persistence.query.mongodb.write-plugin = "akka.persistence.journal.mongodb"
-                          """, HoconAddMode.Prepend);
-        });
+        services
+            .AddOptions<MigrationOptions>()
+            .Configure(opt =>
+            {
+                var config = ctx.Configuration.GetSection("MigrationOptions");
+                config.Bind(opt);
+                opt.MigrationSqlOptions.ConnectionString = postgresConnectionString;
+                opt.MigrationSqlOptions.PluginId = "migration";
+                opt.MigrationSqlOptions.ProviderName = ProviderName.PostgreSQL15;
+            });
+        
+        services
+            // Setup Akka
+            .AddAkka("migration-system", (builder, provider) =>
+            {
+                var options = provider.GetRequiredService<IOptions<MigrationOptions>>().Value;
+                
+                builder
+                    // Boilerplate logging setup
+                    .ConfigureLoggers(configurator: logging =>
+                    {
+                        logging.ClearLoggers();
+                        logging.AddLoggerFactory();
+                    })
+                    
+                    // Setup source persistence plugin, replace this with the appropriate plugin hosting extension method
+                    .WithMongoDbPersistence(
+                        connectionString: mongoDbConnectionString,
+                        isDefaultPlugin: false)
+                    // Make sure that query "write-plugin" setting points to the correct write plugin
+                    .AddHocon(
+                        hocon: $"{options.FromReadJournalId}.write-plugin = {options.FromJournalId.ToHocon()}", 
+                        addMode: HoconAddMode.Prepend)
+                    
+                    // Setup target persistence plugin
+                    .WithSqlPersistence(
+                        connectionString: postgresConnectionString, 
+                        providerName: ProviderName.PostgreSQL15,
+                        autoInitialize: true,
+                        isDefaultPlugin: false)
+                    
+                    // Setup required migration related persistence plugins
+                    .WithSqlMigrationPersistence(provider)
+                    .WithActors((system, registry) =>
+                    {
+                        var migratorActor = system.ActorOf(Props.Create(() => new MigrationTrackerActor(options)), "migrationTracker");
+                        registry.Register<MigrationTrackerActor>(migratorActor);
+                    });
+            });
     });
 
 var host = hostBuilder.Build();
 await host.StartAsync();
 
-var sys = host.Services.GetRequiredService<ActorSystem>();
-var migrationTracker = sys.ActorOf(Props.Create(() => new MigrationTrackerActor()), name: "migrationTracker");
+var registry = host.Services.GetRequiredService<IActorRegistry>();
+var migrationTracker = await registry.GetAsync<MigrationTrackerActor>();
 await migrationTracker.WatchAsync();
 
 await host.StopAsync();
