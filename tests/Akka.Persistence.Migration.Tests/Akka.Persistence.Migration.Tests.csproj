@@ -30,8 +30,4 @@
     <ProjectReference Include="..\..\src\Akka.Persistence.Migration\Akka.Persistence.Migration.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageVersion Update="Microsoft.Data.Sqlite" Version="8.0.8" />
-  </ItemGroup>
-
 </Project>
