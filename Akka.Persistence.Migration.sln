@@ -17,6 +17,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.Shared", "src\App.Share
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "App.PostgreSql", "src\App.PostgreSql\App.PostgreSql.csproj", "{7184F857-69BA-4DDA-8EDB-A86631032EA4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Akka.Persistence.Migration.Tests", "tests\Akka.Persistence.Migration.Tests\Akka.Persistence.Migration.Tests.csproj", "{3CDDDAE9-8117-445A-B762-180C10D061B5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,5 +41,9 @@ Global
 		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7184F857-69BA-4DDA-8EDB-A86631032EA4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3CDDDAE9-8117-445A-B762-180C10D061B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3CDDDAE9-8117-445A-B762-180C10D061B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3CDDDAE9-8117-445A-B762-180C10D061B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3CDDDAE9-8117-445A-B762-180C10D061B5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
