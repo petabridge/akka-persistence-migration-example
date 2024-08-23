@@ -138,13 +138,13 @@ public class SnapshotSyncActorLastSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         
         _syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
         
-        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
         snapshot.Snapshot.Should().NotBeNull();
         snapshot.Snapshot!.Snapshot.Should().BeOfType<string>().And.Be(GenerateState(10));
         snapshot.Snapshot.Metadata.SequenceNr.Should().Be(1000);
         
         _syncActor.Tell(SnapshotSyncProtocol.MoveNext.Instance, TestActor);
-        await ExpectMsgAsync<Done>();
+        await ExpectMsgAsync<SnapshotSyncProtocol.MoveDone>();
         
         _syncActor.Tell(SnapshotSyncProtocol.GetCount.Instance, TestActor);
         count = await ExpectMsgAsync<SnapshotSyncProtocol.SnapshotSyncCount>();
@@ -166,7 +166,7 @@ public class SnapshotSyncActorLastSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         count.Count.Should().Be(0);
 
         syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
-        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
         snapshot.Snapshot.Should().BeNull();
     }
     
@@ -189,7 +189,7 @@ public class SnapshotSyncActorLastSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         count.Count.Should().Be(0);
 
         _syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
-        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
         snapshot.Snapshot.Should().BeNull();
     }
     
@@ -213,7 +213,7 @@ public class SnapshotSyncActorLastSnapshotsSpec : Akka.Hosting.TestKit.TestKit
                 
                 syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
                 
-                var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+                var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
                 snapshot.Snapshot.Should().NotBeNull();
                 snapshot.Snapshot!.Snapshot.Should().BeOfType<string>().And.Be(GenerateState(10));
                 snapshot.Snapshot.Metadata.SequenceNr.Should().Be(1000);

@@ -27,7 +27,7 @@ var hostBuilder = Host.CreateDefaultBuilder()
                     logging.AddLoggerFactory();
                 })
                 .WithSqlPersistence(
-                    "Server=127.0.0.1;Port=5432;Database=akka;User Id=postgres;Password=mysecretpassword;", 
+                    "Server=127.0.0.1;Port=5432;Database=akka;User Id=akka;Password=akka;", 
                     ProviderName.PostgreSQL15);
         });
     });

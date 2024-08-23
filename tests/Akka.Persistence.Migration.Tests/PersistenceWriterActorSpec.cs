@@ -137,11 +137,11 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
         var writer = Sys.ActorOf(Props.Create(() => new PersistenceWriterActor(_options!, "a")), "persistence-writer");
         
         writer.Tell(CreateEnvelopeFor(1, 1), TestActor);
-        await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+        await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
         writer.Tell(CreateEnvelopeFor(2, 2), TestActor);
-        await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+        await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
         writer.Tell(CreateEnvelopeFor(3, 3), TestActor);
-        await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+        await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
 
         var events = new List<int>();
         var reader = Sys.ReadJournalFor<InMemoryReadJournal>("akka.persistence.query.journal.inmem");
@@ -162,11 +162,11 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
             var writer = Sys.ActorOf(Props.Create(() => new PersistenceWriterActor(_options!, "a")), "persistence-writer");
         
             writer.Tell(CreateEnvelopeFor(1, 1), TestActor);
-            await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+            await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
             writer.Tell(CreateEnvelopeFor(2, 2), TestActor);
-            await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+            await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
             writer.Tell(CreateEnvelopeFor(3, 3), TestActor);
-            await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+            await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
 
             var events = new List<int>();
             var reader = Sys.ReadJournalFor<InMemoryReadJournal>("akka.persistence.query.journal.inmem");
@@ -217,10 +217,10 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
         var writer = Sys.ActorOf(Props.Create(() => new PersistenceWriterActor(_options!, "a")), "persistence-writer");
         
         writer.Tell(CreateEnvelopeFor(1, 1), TestActor);
-        await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+        await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
         
         writer.Tell(new SelectedSnapshot(new SnapshotMetadata("a", 999), 6), TestActor);
-        await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+        await ExpectMsgAsync<PersistenceWriterProtocol.SnapshotWriteCompleted>();
         
         var persistence = Persistence.Instance.Apply(Sys);
         var snapshot = persistence.SnapshotStoreFor(_options!.ToSnapshotStoreId);
@@ -239,10 +239,10 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
             var writer = Sys.ActorOf(Props.Create(() => new PersistenceWriterActor(_options!, "a")), "persistence-writer");
         
             writer.Tell(CreateEnvelopeFor(1, 1), TestActor);
-            await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+            await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
             
             writer.Tell(new SelectedSnapshot(new SnapshotMetadata("a", 999), 6), TestActor);
-            await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+            await ExpectMsgAsync<PersistenceWriterProtocol.SnapshotWriteCompleted>();
             
             var persistence = Persistence.Instance.Apply(Sys);
             var snapshot = persistence.SnapshotStoreFor(_options!.ToSnapshotStoreId);
@@ -262,7 +262,7 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
             var writer = Sys.ActorOf(Props.Create(() => new PersistenceWriterActor(_options!, "a")), "persistence-writer");
         
             writer.Tell(CreateEnvelopeFor(1, 1), TestActor);
-            await ExpectMsgAsync<PersistenceWriterProtocol.WriteCompleted>();
+            await ExpectMsgAsync<PersistenceWriterProtocol.PersistWriteCompleted>();
             
             var probe = CreateTestProbe();
             writer.Tell(new SelectedSnapshot(new SnapshotMetadata("a", 999), 6), probe);

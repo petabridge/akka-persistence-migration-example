@@ -8,10 +8,16 @@ public static class PersistenceWriterProtocol
 
     public interface IWriteSucceeded : IWriteResult;
     
-    public sealed class WriteCompleted: IWriteSucceeded
+    public sealed class PersistWriteCompleted: IWriteSucceeded
     {
-        public static readonly WriteCompleted Instance = new();
-        private WriteCompleted() { }
+        public static readonly PersistWriteCompleted Instance = new();
+        private PersistWriteCompleted() { }
+    }
+    
+    public sealed class SnapshotWriteCompleted: IWriteSucceeded
+    {
+        public static readonly SnapshotWriteCompleted Instance = new();
+        private SnapshotWriteCompleted() { }
     }
 
     public interface IWriteFailed : IWriteResult
@@ -35,13 +41,6 @@ public static class PersistenceWriterProtocol
     {
         public string Name => "Event";
         public string ErrorMessage => "Event migration failed. Maximum retries exceeded: {0} retries";
-        public IWriteFailed FailedMessage(Exception cause) => new PersistFailed(cause);
-    }
-    
-    public sealed record PersistAllOperation(object[] Messages, IActorRef ReplyTo): IOperation
-    {
-        public string Name => "Batched events";
-        public string ErrorMessage => "Batched events migration failed. Maximum retries exceeded: {0} retries";
         public IWriteFailed FailedMessage(Exception cause) => new PersistFailed(cause);
     }
     

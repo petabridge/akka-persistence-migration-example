@@ -3,6 +3,7 @@ using Akka.Hosting;
 using Akka.Persistence.Migration;
 using Akka.Persistence.Migration.Actors;
 using Akka.Persistence.Migration.Configuration;
+using Akka.Persistence.Migration.Messages;
 using Akka.Persistence.MongoDb.Hosting;
 using Akka.Persistence.Sql.Hosting;
 using LinqToDB;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-const string postgresConnectionString = "Server=127.0.0.1;Port=5432;Database=akka;User Id=postgres;Password=mysecretpassword;";
+const string postgresConnectionString = "Server=127.0.0.1;Port=5432;Database=akka;User Id=akka;Password=akka;Include Error Detail=true;";
 const string mongoDbConnectionString = "mongodb://localhost:27017/akka";
 
 var hostBuilder = Host.CreateDefaultBuilder()
@@ -76,8 +77,27 @@ var hostBuilder = Host.CreateDefaultBuilder()
 var host = hostBuilder.Build();
 await host.StartAsync();
 
+var options = host.Services.GetRequiredService<IOptions<MigrationOptions>>().Value;
 var registry = host.Services.GetRequiredService<IActorRegistry>();
 var migrationTracker = await registry.GetAsync<MigrationTrackerActor>();
+
+var result = await migrationTracker
+    .Ask<MigrationActorProtocol.IMigrationResult>(MigrationActorProtocol.NotifyWhenCompleted.Instance);
+switch (result)
+{
+    case MigrationActorProtocol.MigrationCompleted:
+        Console.WriteLine("Migration completed");
+        break;
+    case MigrationActorProtocol.MigrationFailed fail:
+        Console.WriteLine($"Migration failed while processing persistence ID {fail.PersistenceId}");
+        Console.WriteLine(fail.Cause);
+        break;
+}
+
+Console.WriteLine("Waiting for all persist operation to complete");
+await Task.Delay(TimeSpan.FromSeconds(5));
+
+await migrationTracker.GracefulStop(options.AskTimeout);
 await migrationTracker.WatchAsync();
 
 await host.StopAsync();
