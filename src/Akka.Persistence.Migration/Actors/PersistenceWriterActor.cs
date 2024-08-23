@@ -30,11 +30,9 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
     
     public override string PersistenceId { get; }
     public ITimerScheduler Timers { get; set; } = null!;
-
+    
     private void Idle()
     {
-        _log.Info("PersistenceWriter Idle");
-        
         Command<EventEnvelope>(env =>
         {
             var msg = env.Tags.Length > 0 ? new Tagged(env.Event, env.Tags) : env.Event;
@@ -45,16 +43,16 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
         {
             HandleSaveSnapshot(snapshot.Snapshot, Sender);
         });
+        CommandAny(HandleUnhandled);
     }
     
     private void Writing()
     {
-        _log.Info("PersistenceWriter Writing");
-        
         Command<PersistenceWriterProtocol.PersistFailed>(fail => HandleFailure(fail.Cause));
-        Command<SaveSnapshotSuccess>(_ => HandleComplete());
+        Command<SaveSnapshotSuccess>(_ => Self.Tell(PersistenceWriterProtocol.SnapshotWriteCompleted.Instance));
         Command<SaveSnapshotFailure>(fail => HandleFailure(fail.Cause));
         Command<PersistenceWriterProtocol.Retry>(_ => HandleRetry());
+        Command<PersistenceWriterProtocol.IWriteSucceeded>(HandleComplete);
         CommandAny(HandleUnhandled);
     }
     
@@ -63,30 +61,11 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
         _currentOperation ??= new PersistenceWriterProtocol.PersistOperation(evt, sender);
         Become(Writing);
         
-        _log.Info($"Migrating event {evt}");
+        _log.Debug($"Migrating event {evt}");
         Persist(evt, _ =>
         {
-            _log.Info($"Event {evt} migrated");
-            HandleComplete();
-        });
-    }
-    
-    private void HandlePersistAll(object[] events, IActorRef sender)
-    {
-        _currentOperation ??= new PersistenceWriterProtocol.PersistAllOperation(events, sender);
-        Become(Writing);
-        
-        _log.Debug($"Migrating {events.Length} events");
-        var written = 0;
-        PersistAll(events, persisted =>
-        {
-            _log.Debug($"Event {persisted} migrated");
-            
-            written++;
-            if (written != events.Length) 
-                return;
-            
-            HandleComplete();
+            _log.Debug($"Event {evt} migrated");
+            Self.Tell(PersistenceWriterProtocol.PersistWriteCompleted.Instance);
         });
     }
     
@@ -98,10 +77,10 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
         SaveSnapshot(snapshot);
     }
     
-    private void HandleComplete()
+    private void HandleComplete(PersistenceWriterProtocol.IWriteSucceeded message)
     {
         _exceptions.Clear();
-        _currentOperation!.ReplyTo.Tell(PersistenceWriterProtocol.WriteCompleted.Instance);
+        _currentOperation!.ReplyTo.Tell(message);
         _currentOperation = null;
         
         Become(Idle);
@@ -113,9 +92,6 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
         {
             case PersistenceWriterProtocol.PersistOperation p:
                 HandlePersist(p.Message, p.ReplyTo);
-                break;
-            case PersistenceWriterProtocol.PersistAllOperation pa:
-                HandlePersistAll(pa.Messages, pa.ReplyTo);
                 break;
             case PersistenceWriterProtocol.SnapshotOperation s:
                 HandleSaveSnapshot(s.Message, s.ReplyTo);
@@ -151,10 +127,6 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
             _log.Error(ex, _currentOperation.ErrorMessage, _maxRetries);
             _currentOperation.ReplyTo.Tell(_currentOperation.FailedMessage(ex));
         }
-        finally
-        {
-            Context.Stop(Self);
-        }
     }
     
     private void HandleUnhandled(object msg)
@@ -177,4 +149,3 @@ public class PersistenceWriterActor: ReceivePersistentActor, IWithTimers
         Self.Tell(new PersistenceWriterProtocol.PersistFailed(cause));
     }
 }
-

@@ -31,6 +31,12 @@ public static class SnapshotSyncProtocol
         private MoveNext() { }
     }
     
-    public sealed record CurrentSnapshotSync(SelectedSnapshot? Snapshot): ISnapshotSyncResponse;
+    public sealed class MoveDone: ISnapshotSyncCommand
+    {
+        public static readonly MoveDone Instance = new();
+        private MoveDone() { }
+    }
+    
+    public sealed record CurrentSnapshot(SelectedSnapshot? Snapshot): ISnapshotSyncResponse;
     public sealed record AllSnapshotsLoaded(int Count) : ISnapshotSyncResponse;
 }

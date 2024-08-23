@@ -27,13 +27,13 @@ public class SnapshotSyncActor: ReceivePersistentActor, IWithTimers
         IActorRef trackerActor,
         string persistenceId)
     {
-        PersistenceId = $"{_persistenceId}-snapshot-sync";
-        JournalPluginId = options.MigrationSqlOptions.JournalId;
-        SnapshotPluginId = options.MigrationSqlOptions.SnapshotStoreId;
-        
         _log = Context.GetLogger();
         _persistenceId = persistenceId;
+        PersistenceId = $"{_persistenceId}-snapshot-sync";
         _trackerActor = trackerActor;
+        
+        JournalPluginId = options.MigrationSqlOptions.JournalId;
+        SnapshotPluginId = options.MigrationSqlOptions.SnapshotStoreId;
         
         _maxRetries = options.MaxRetries;
         _retryInterval = options.RetryInterval;
@@ -120,22 +120,22 @@ public class SnapshotSyncActor: ReceivePersistentActor, IWithTimers
         {
             Sender.Tell(
                 _snapshots.Count == 0 
-                    ? new SnapshotSyncProtocol.CurrentSnapshotSync(null) 
-                    : new SnapshotSyncProtocol.CurrentSnapshotSync(_snapshots.Peek()));
+                    ? new SnapshotSyncProtocol.CurrentSnapshot(null) 
+                    : new SnapshotSyncProtocol.CurrentSnapshot(_snapshots.Peek()));
         });
         
         Command<SnapshotSyncProtocol.MoveNext>(_ =>
         {
             if (!_snapshots.TryPop(out var snapshot))
             {
-                Sender.Tell(Done.Instance);
+                Sender.Tell(SnapshotSyncProtocol.MoveDone.Instance);
                 return;
             }
             
             var sender = Sender;
             Persist(snapshot.Metadata.SequenceNr, _ =>
             {
-                sender.Tell(Done.Instance);
+                sender.Tell(SnapshotSyncProtocol.MoveDone.Instance);
             });
         });
     }

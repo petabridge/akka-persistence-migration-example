@@ -13,17 +13,18 @@ namespace Akka.Persistence.Migration.Actors;
 
 public class MigrationTrackerActor: ReceiveActor
 {
+    private readonly MigrationOptions _options;
     private readonly ILoggingAdapter _log;
-    private readonly string _targetJournalId;
     private readonly Queue<string> _persistenceIds;
+    private int _runningMigrations;
+    private IActorRef? _watcher;
     
     public MigrationTrackerActor(MigrationOptions options)
     {
         _log = Context.GetLogger();
         _persistenceIds = new Queue<string>();
-        
-        _targetJournalId = options.FromJournalId;
-        
+        _options = options;
+
         Become(Initializing);
     }
     
@@ -31,62 +32,79 @@ public class MigrationTrackerActor: ReceiveActor
     {
         Receive<string>(persistenceId => _persistenceIds.Enqueue(persistenceId));
 
-        Receive<Initialized>(_ =>
+        Receive<MigrationActorProtocol.Initialized>(_ =>
         {
-            _log.Info($"Initialization completed. Persistence IDs: [{string.Join(", ", _persistenceIds)}]");
+            _log.Info($"Initialization completed. Persistence IDs loaded: {_persistenceIds.Count}");
             Become(Active);
-            MigrateNextPersistenceId();
+            MigrateNextBatch();
         });
         
-        Receive<InitializationFailed>(fail =>
+        Receive<MigrationActorProtocol.InitializationFailed>(fail =>
         {
             _log.Error(fail.Cause, "Initialization failed");
             Context.Stop(Self);
+        });
+
+        Receive<MigrationActorProtocol.NotifyWhenCompleted>(_ =>
+        {
+            _watcher = Sender;
         });
     }
     
     private void Active()
     {
-        Receive<MigrationCompleted>(msg =>
+        Receive<MigrationActorProtocol.NotifyWhenCompleted>(_ =>
+        {
+            _watcher = Sender;
+        });
+        
+        Receive<MigrationActorProtocol.PersistenceIdMigrationCompleted>(msg =>
         {
             _log.Info($"Migration of {msg.PersistenceId} completed");
+            _runningMigrations--;
+            MigrateNextBatch();
         });
         
-        Receive<MigrationFailed>(msg =>
+        Receive<MigrationActorProtocol.PersistenceIdMigrationFailed>(msg =>
         {
             _log.Error(msg.Cause, $"Migration failed. Failed persistence ID: {msg.PersistenceId}");
-            Context.Stop(Self);
+            _watcher?.Tell(new MigrationActorProtocol.MigrationFailed(msg.Cause, msg.PersistenceId));
         });
-        
-        Receive<Terminated>(_ =>
+    }
+
+    private void MigrateNextBatch()
+    {
+        if (_runningMigrations == 0 && _persistenceIds.Count == 0)
         {
+            _log.Info("All persistence IDs have been migrated");
+            _watcher?.Tell(MigrationActorProtocol.MigrationCompleted.Instance);
+            return;
+        }
+        
+        while (_runningMigrations < _options.MaxParallelMigrations)
+        {
+            if (_persistenceIds.Count == 0)
+                break;
             MigrateNextPersistenceId();
-        });
+        }
     }
     
     private void MigrateNextPersistenceId()
     {
-        if (_persistenceIds.Count == 0)
-        {
-            _log.Info("All persistence IDs have been migrated");
-            Context.Stop(Self);
-            return;
-        }
-        
+        _runningMigrations++;
         var persistenceId = _persistenceIds.Dequeue();
         _log.Info($"Migrating persistence ID: {persistenceId}");
-        var migrator = Context.ActorOf(
-            props: Props.Create(() => new PersistenceIdMigratorActor(Self, persistenceId)),
+        Context.ActorOf(
+            props: Props.Create(() => new PersistenceIdMigratorActor(_options, Self, persistenceId)),
             name: $"{persistenceId}-migrator");
-        Context.Watch(migrator);
     }
     
     protected override void PreStart()
     {
-        var queryJournal = Context.System.ReadJournalFor<MongoDbReadJournal>(_targetJournalId);
+        var queryJournal = Context.System.ReadJournalFor<MongoDbReadJournal>(_options.FromReadJournalId);
         queryJournal.CurrentPersistenceIds()
             .RunWith(
-                sink: Sink.ActorRef<string>(Self, Initialized.Instance, ex => new InitializationFailed(ex)), 
+                sink: Sink.ActorRef<string>(Self, MigrationActorProtocol.Initialized.Instance, ex => new MigrationActorProtocol.InitializationFailed(ex)), 
                 materializer: Context.System.Materializer());
     }
 }

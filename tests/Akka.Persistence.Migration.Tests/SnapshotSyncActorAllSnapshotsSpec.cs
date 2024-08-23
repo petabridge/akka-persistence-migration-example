@@ -139,14 +139,14 @@ public class SnapshotSyncActorAllSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         {
             syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
             
-            var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+            var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
             snapshot.Snapshot.Should().NotBeNull();
             snapshot.Snapshot!.Snapshot.Should().BeOfType<string>();
             snapshot.Snapshot.Snapshot.Should().Be(GenerateState(i));
             snapshot.Snapshot.Metadata.SequenceNr.Should().Be(i * 100);
             
             syncActor.Tell(SnapshotSyncProtocol.MoveNext.Instance, TestActor);
-            await ExpectMsgAsync<Done>();
+            await ExpectMsgAsync<SnapshotSyncProtocol.MoveDone>();
         }
     }
     
@@ -165,7 +165,7 @@ public class SnapshotSyncActorAllSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         count.Count.Should().Be(0);
 
         syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
-        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+        var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
         snapshot.Snapshot.Should().BeNull();
     }
     
@@ -187,14 +187,14 @@ public class SnapshotSyncActorAllSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         {
             syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
             
-            var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+            var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
             snapshot.Snapshot.Should().NotBeNull();
             snapshot.Snapshot!.Snapshot.Should().BeOfType<string>();
             snapshot.Snapshot.Snapshot.Should().Be(GenerateState(i));
             snapshot.Snapshot.Metadata.SequenceNr.Should().Be(i * 100);
             
             syncActor.Tell(SnapshotSyncProtocol.MoveNext.Instance, TestActor);
-            await ExpectMsgAsync<Done>();
+            await ExpectMsgAsync<SnapshotSyncProtocol.MoveDone>();
         }
 
         await WatchAsync(syncActor);
@@ -214,14 +214,14 @@ public class SnapshotSyncActorAllSnapshotsSpec : Akka.Hosting.TestKit.TestKit
         {
             syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
             
-            var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+            var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
             snapshot.Snapshot.Should().NotBeNull();
             snapshot.Snapshot!.Snapshot.Should().BeOfType<string>();
             snapshot.Snapshot.Snapshot.Should().Be(GenerateState(i));
             snapshot.Snapshot.Metadata.SequenceNr.Should().Be(i * 100);
             
             syncActor.Tell(SnapshotSyncProtocol.MoveNext.Instance, TestActor);
-            await ExpectMsgAsync<Done>();
+            await ExpectMsgAsync<SnapshotSyncProtocol.MoveDone>();
         }
     }
     
@@ -247,14 +247,14 @@ public class SnapshotSyncActorAllSnapshotsSpec : Akka.Hosting.TestKit.TestKit
                 {
                     syncActor.Tell(SnapshotSyncProtocol.GetCurrent.Instance, TestActor);
             
-                    var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshotSync>();
+                    var snapshot = await ExpectMsgAsync<SnapshotSyncProtocol.CurrentSnapshot>();
                     snapshot.Snapshot.Should().NotBeNull();
                     snapshot.Snapshot!.Snapshot.Should().BeOfType<string>();
                     snapshot.Snapshot.Snapshot.Should().Be(GenerateState(i));
                     snapshot.Snapshot.Metadata.SequenceNr.Should().Be(i * 100);
             
                     syncActor.Tell(SnapshotSyncProtocol.MoveNext.Instance, TestActor);
-                    await ExpectMsgAsync<Done>();
+                    await ExpectMsgAsync<SnapshotSyncProtocol.MoveDone>();
                 }
             });
     }
