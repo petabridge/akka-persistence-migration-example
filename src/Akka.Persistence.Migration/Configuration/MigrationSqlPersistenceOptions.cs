@@ -1,6 +1,6 @@
 ﻿namespace Akka.Persistence.Migration.Configuration;
 
-public class MigrationSqlPersistenceOptions
+public sealed record MigrationSqlPersistenceOptions
 {
     public string PluginId { get; set; } = "migration";
     public string ConnectionString { get; set; } = string.Empty;

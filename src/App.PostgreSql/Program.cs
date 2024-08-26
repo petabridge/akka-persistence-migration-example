@@ -1,6 +1,9 @@
-﻿using Akka.Actor;
+﻿using System.Text;
+using Akka.Actor;
 using Akka.Hosting;
 using Akka.Persistence.Sql.Hosting;
+using Alba.CsConsoleFormat;
+using App.Shared;
 using App.Shared.Actors;
 using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
@@ -44,5 +47,37 @@ foreach (var actorIndex in Enumerable.Range(0, totalActors))
         $"worker-{actorIndex}");
 }
 
-Console.ReadKey();
+var reporter = sys.ActorOf(Props.Create(() => new ReportingActor(actors)), "reporter");
+var report = await reporter.Ask<Report>(GetReport.Instance);
+
+Console.OutputEncoding = Encoding.UTF8;
+var headerThickness = new LineThickness(LineWidth.Single, LineWidth.Double);
+var rowThickness = new LineThickness(LineWidth.Single, LineWidth.None);
+
+var currentRow = 0;
+var doc = new Document(
+    new Span("Persistence ID Count: ") { Color = ConsoleColor.Yellow }, report.Rows.Length, "\n",
+    new Grid {
+        Color = ConsoleColor.Gray,
+        Columns = { GridLength.Auto, GridLength.Auto, GridLength.Auto },
+        Children = {
+            new Cell("Persistence Id") { Stroke = headerThickness, Color = ConsoleColor.White},
+            new Cell("Last Sequence Nr") { Stroke = headerThickness, Color = ConsoleColor.White},
+            new Cell("Checksum") { Stroke = headerThickness, Color = ConsoleColor.White},
+            report.Rows.Select(row =>
+            {
+                currentRow++;
+                var color = currentRow % 2 == 0 ? ConsoleColor.White : ConsoleColor.DarkGray;
+                return new[]
+                {
+                    new Cell(row.Name) { Stroke = rowThickness, Color = color },
+                    new Cell(row.LastSequenceNumber) { Stroke = rowThickness, Color = color, Align = Align.Right},
+                    new Cell(row.Checksum) { Stroke = rowThickness, Color = color, Align = Align.Right},
+                };
+            })
+        }
+    }
+);
+ConsoleRenderer.RenderDocument(doc);
+
 await host.StopAsync();

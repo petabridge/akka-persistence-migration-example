@@ -17,6 +17,10 @@ const string postgresConnectionString = "Server=127.0.0.1;Port=5432;Database=akk
 const string mongoDbConnectionString = "mongodb://localhost:27017/akka";
 
 var hostBuilder = Host.CreateDefaultBuilder()
+    .ConfigureHostConfiguration(builder =>
+    {
+        builder.AddJsonFile("appsettings.json", false);
+    })
     .ConfigureLogging(builder =>
     {
         builder.AddConsole();

@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Persistence.MongoDb.Hosting" />
+    <PackageReference Include="Alba.CsConsoleFormat" />
   </ItemGroup>
 
 </Project>
