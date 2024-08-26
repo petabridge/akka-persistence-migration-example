@@ -6,11 +6,10 @@ using Akka.Persistence.MongoDb.Query;
 using Akka.Persistence.Query;
 using Akka.Streams;
 using Akka.Streams.Dsl;
-using LanguageExt.ClassInstances;
 
 namespace Akka.Persistence.Migration.Actors;
 
-public class PersistenceIdMigratorActor: ReceivePersistenceWithRetryActor<long, long>, IWithTimers
+public class PersistenceIdMigratorActor: ReceivePersistenceWithRetryActor<long, long>
 {
     private readonly MigrationOptions _options;
     private readonly string _persistenceId;

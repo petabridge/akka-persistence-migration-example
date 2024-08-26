@@ -8,7 +8,6 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 const int totalActors = 50;
-const int messagesPerActor = 200;
 const int snapshotEvery = 50;
 
 var hostBuilder = Host.CreateDefaultBuilder()

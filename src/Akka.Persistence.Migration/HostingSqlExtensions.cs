@@ -1,7 +1,6 @@
 ﻿using Akka.Hosting;
 using Akka.Persistence.Migration.Configuration;
 using Akka.Persistence.Sql.Hosting;
-using LinqToDB;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
