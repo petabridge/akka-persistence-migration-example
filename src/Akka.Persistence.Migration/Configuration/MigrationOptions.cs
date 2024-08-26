@@ -1,6 +1,6 @@
 ﻿namespace Akka.Persistence.Migration.Configuration;
 
-public class MigrationOptions
+public sealed record MigrationOptions
 {
     public MigrationSqlPersistenceOptions MigrationSqlOptions { get; } = new();
     public string FromJournalId { get; set; } = string.Empty;

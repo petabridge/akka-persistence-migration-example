@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Akka.Persistence.Sql.Hosting" />
+    <PackageReference Include="Alba.CsConsoleFormat" />
     <PackageReference Include="Npgsql" />
   </ItemGroup>
 
