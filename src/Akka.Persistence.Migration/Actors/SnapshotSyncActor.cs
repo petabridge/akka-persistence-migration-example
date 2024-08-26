@@ -1,9 +1,7 @@
 ﻿using Akka.Actor;
 using Akka.Event;
-using Akka.Hosting;
 using Akka.Persistence.Migration.Configuration;
 using Akka.Persistence.Migration.Messages;
-using Microsoft.Extensions.Options;
 
 namespace Akka.Persistence.Migration.Actors;
 

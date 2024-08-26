@@ -1,5 +1,4 @@
 ﻿using Akka.Actor;
-using Akka.DependencyInjection;
 using Akka.Event;
 using Akka.Persistence.Migration.Configuration;
 using Akka.Persistence.Migration.Messages;
@@ -7,7 +6,6 @@ using Akka.Persistence.MongoDb.Query;
 using Akka.Persistence.Query;
 using Akka.Streams;
 using Akka.Streams.Dsl;
-using Microsoft.Extensions.Options;
 
 namespace Akka.Persistence.Migration.Actors;
 

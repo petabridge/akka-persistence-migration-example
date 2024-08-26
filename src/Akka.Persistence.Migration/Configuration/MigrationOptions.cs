@@ -8,7 +8,7 @@ public class MigrationOptions
     public string FromSnapshotStoreId { get; set; } = string.Empty;
     public string ToJournalId { get; set; } = string.Empty;
     public string ToSnapshotStoreId { get; set; } = string.Empty;
-    public bool MigrateAllSnapshots { get; set; } = false;
+    public bool MigrateAllSnapshots { get; set; }
     public int MaxRetries { get; set; } = 5;
     public TimeSpan RetryInterval { get; set; } = TimeSpan.FromSeconds(1);
     public TimeSpan AskTimeout { get; set; } = TimeSpan.FromMinutes(10);
