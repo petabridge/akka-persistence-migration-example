@@ -10,7 +10,7 @@ using LanguageExt.ClassInstances;
 
 namespace Akka.Persistence.Migration.Actors;
 
-public class PersistenceIdMigratorActor: ReceivePersistentActor
+public class PersistenceIdMigratorActor: ReceivePersistenceWithRetryActor<long, long>, IWithTimers
 {
     private readonly MigrationOptions _options;
     private readonly string _persistenceId;
@@ -33,18 +33,24 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
         _persistenceId = persistenceId;
         _migrationTracker = migrationTracker;
         _log = Context.GetLogger();
+        MaxRetries = options.MaxRetries;
+        RetryInterval = options.RetryInterval;
         
         PersistenceId = $"{_persistenceId}-migrator";
         JournalPluginId = _options.MigrationSqlOptions.JournalId;
         SnapshotPluginId = _options.MigrationSqlOptions.SnapshotStoreId;
         
         Recover<SnapshotOffer>(offer => _lastSequenceNr = (long) offer.Snapshot);
+        
         Recover<long>(state =>
         {
             _persistCount++;
             _lastSequenceNr = state;
         });
     }
+    
+    protected override int MaxRetries { get; }
+    protected override TimeSpan RetryInterval { get; }
     
     private void Initializing()
     {
@@ -106,8 +112,7 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
         });
         
         Command<PersistenceWriterProtocol.PersistWriteCompleted>(_ =>
-        {
-            Persist(_currentEvent!.SequenceNr, _ =>
+            PersistWithRetry(_currentEvent!.SequenceNr, _ =>
             {
                 _migratedCount++;
                 _persistCount++;
@@ -120,12 +125,11 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
                 else
                 {
                     if (_persistCount % _options.SnapshotEvery == 0)
-                        SaveSnapshot(_lastSequenceNr);
+                        SaveSnapshotWithRetry(_lastSequenceNr);
                     else
                         _streamActor!.Tell(PersistenceIdMigratorProtocol.EventPersisted.Instance, Self);
                 }
-            });
-        });
+            }));
         
         Command<PersistenceWriterProtocol.SnapshotWriteCompleted>(_ =>
         {
@@ -151,25 +155,14 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
                 _streamActor!.Tell(PersistenceIdMigratorProtocol.EventPersisted.Instance, Self);
         });
         
-        Command<SaveSnapshotSuccess>(msg =>
-        {
-            DeleteMessages(msg.Metadata.SequenceNr);
-            _streamActor!.Tell(PersistenceIdMigratorProtocol.EventPersisted.Instance, Self);
-        });
-        
         Command<DeleteMessagesSuccess>(_ => { /* no-op */ });
         
-        Command<DeleteMessagesFailure>(_ => { /* no-op */ });
+        Command<DeleteMessagesFailure>(_ => { /* no-op, it's fine if we fail to clean up journal events */ });
         
         Command<PersistenceIdMigratorProtocol.EventPlaybackCompleted>(_ =>
         {
             _log.Info($"{_persistenceId}: Event playback completed. {_migratedCount} events migrated.");
             _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationCompleted(_persistenceId));
-        });
-        
-        Command<SaveSnapshotFailure>(fail =>
-        {
-            _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationFailed(fail.Cause, _persistenceId));
         });
         
         Command<PersistenceIdMigratorProtocol.CommandFailure>(fail =>
@@ -182,13 +175,26 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
             _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationFailed(fail.Cause, _persistenceId));
         });
         
-        Command<MigrationActorProtocol.PersistenceIdMigrationFailed>(msg =>
-        {
-            _migrationTracker.Tell(msg);
-        });
+        CommandRetry();
     }
     
     public override string PersistenceId { get; }
+    
+    protected override void OnPersistFailure(Exception cause)
+    {
+        _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationFailed(cause, _persistenceId));
+    }
+    
+    protected override void OnSaveSnapshotSuccess(SaveSnapshotSuccess msg)
+    {
+        DeleteMessages(msg.Metadata.SequenceNr);
+        _streamActor!.Tell(PersistenceIdMigratorProtocol.EventPersisted.Instance, Self);
+    }
+    
+    protected override void OnSaveSnapshotFailure(Exception cause)
+    {
+        _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationFailed(cause, _persistenceId));
+    }
     
     protected override void OnReplaySuccess()
     {
@@ -199,18 +205,6 @@ public class PersistenceIdMigratorActor: ReceivePersistentActor
         
         // start snapshot sync actor
         _snapshotSync = Context.ActorOf(Props.Create(() => new SnapshotSyncActor(_options, Self, _persistenceId)), $"{_persistenceId}-snapshot-sync");
-    }
-    
-    protected override void OnPersistFailure(Exception cause, object @event, long sequenceNr)
-    {
-        base.OnPersistFailure(cause, @event, sequenceNr);
-        _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationFailed(cause, _persistenceId));
-    }
-    
-    protected override void OnPersistRejected(Exception cause, object @event, long sequenceNr)
-    {
-        base.OnPersistRejected(cause, @event, sequenceNr);
-        _migrationTracker.Tell(new MigrationActorProtocol.PersistenceIdMigrationFailed(cause, _persistenceId));
     }
     
     protected override void OnRecoveryFailure(Exception reason, object? message = null)

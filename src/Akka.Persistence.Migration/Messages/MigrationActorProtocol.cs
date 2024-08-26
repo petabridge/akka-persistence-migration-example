@@ -1,6 +1,4 @@
-﻿using Akka.Persistence.Migration.Actors;
-
-namespace Akka.Persistence.Migration.Messages;
+﻿namespace Akka.Persistence.Migration.Messages;
 
 public static class MigrationActorProtocol
 {
@@ -11,9 +9,9 @@ public static class MigrationActorProtocol
     }
     
     public sealed record InitializationFailed(Exception Cause);
-
+    
     public sealed record PersistenceIdMigrationCompleted(string PersistenceId);
-
+    
     public sealed record PersistenceIdMigrationFailed(Exception Cause, string PersistenceId);
     
     public sealed class NotifyWhenCompleted
@@ -21,11 +19,8 @@ public static class MigrationActorProtocol
         public static readonly NotifyWhenCompleted Instance = new();
         private NotifyWhenCompleted() { }
     }
-    
-    public interface IMigrationResult
-    {
-        
-    }
+
+    public interface IMigrationResult;
     
     public sealed class MigrationCompleted: IMigrationResult
     {
