@@ -39,7 +39,7 @@ To seed the MongoDB database with data, you can either run the `App.MongoDb SEED
 dotnet run --project .\src\App.MongoDb\App.MongoDb.csproj -- seed
 ```
 
-The seeding app will persist 11,000 messages across 50 actors evenly (220 messages per actor), creating a snapshot every 50 messages.  You should see the actors reporting its final state of 200 data set like so:
+The seeding app will persist 11,000 messages across 50 actors evenly (220 messages per actor), creating a snapshot every 50 messages.  You should see the actors reporting its final state of 220 dataset like so:
 
 ```text
 Persistence ID Count: 50
