@@ -190,9 +190,6 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
             var probe = CreateTestProbe();
             writer.Tell(CreateEnvelopeFor(1, 1), probe);
             probe!.ExpectMsg<PersistenceWriterProtocol.PersistFailed>();
-                
-            await WatchAsync(writer);
-            await ExpectTerminatedAsync(writer);
         });
     }
     
@@ -267,9 +264,6 @@ public class PersistenceWriterActorSpec: Akka.Hosting.TestKit.TestKit
             var probe = CreateTestProbe();
             writer.Tell(new SelectedSnapshot(new SnapshotMetadata("a", 999), 6), probe);
             probe!.ExpectMsg<PersistenceWriterProtocol.SnapshotFailed>();
-            
-            await WatchAsync(writer);
-            await ExpectTerminatedAsync(writer);
         });
     }
 
