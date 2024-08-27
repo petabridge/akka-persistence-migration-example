@@ -27,7 +27,7 @@ public abstract class ReceivePersistenceWithRetryActor<TPersist, TSnapshot>: Rec
         
         Command<PersistenceRetryProtocol.IPersistenceFailure>(HandlePersistenceFailure);
         
-        Command<PersistenceRetryProtocol.RetrySnapshot>(_ => SaveSnapshot(_currentSnapshot));
+        Command<PersistenceRetryProtocol.RetrySnapshot>(_ => SaveSnapshotWithRetry(_currentSnapshot!));
         
         Command<PersistenceRetryProtocol.RetryPersist>(_ => PersistWithRetry(_currentEvent!, _persistAction!));
     }
@@ -105,7 +105,7 @@ public abstract class ReceivePersistenceWithRetryActor<TPersist, TSnapshot>: Rec
     protected override void OnPersistFailure(Exception cause, object @event, long sequenceNr)
     {
         base.OnPersistFailure(cause, @event, sequenceNr);
-        Self.Tell(new PersistenceRetryProtocol.PersistFailure(cause));
+        OnPersistFailure(cause);
     }
     
     protected override void OnPersistRejected(Exception cause, object @event, long sequenceNr)
