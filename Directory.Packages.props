@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Akka.Persistence" Version="1.5.27.1" />
+    <PackageVersion Include="Akka.Persistence" Version="1.5.28" />
     <PackageVersion Include="Akka.Persistence.MongoDb.Hosting" Version="1.5.26" />
     <PackageVersion Include="Akka.Persistence.Sql.Hosting" Version="1.5.27.1" />
     <PackageVersion Include="Alba.CsConsoleFormat" Version="1.0.0" />
