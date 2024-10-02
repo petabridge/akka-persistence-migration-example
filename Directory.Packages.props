@@ -12,7 +12,7 @@
   <!-- Test dependencies -->
   <ItemGroup>
     <PackageVersion Include="Akka.Persistence.Query.InMemory" Version="1.5.27.1" />
-    <PackageVersion Include="Akka.Hosting.TestKit" Version="1.5.27" />
+    <PackageVersion Include="Akka.Hosting.TestKit" Version="1.5.29" />
     <PackageVersion Include="Akka.Persistence.TestKit" Version="1.5.27.1" />
     <PackageVersion Include="Akka.Persistence.TestKit.Xunit2" Version="1.5.27.1" />
     <PackageVersion Include="Microsoft.Data.SQLite" Version="8.0.8" />
