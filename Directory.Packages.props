@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Akka.Persistence" Version="1.5.27.1" />
+    <PackageVersion Include="Akka.Persistence" Version="1.5.32" />
     <PackageVersion Include="Akka.Persistence.MongoDb.Hosting" Version="1.5.26" />
     <PackageVersion Include="Akka.Persistence.Sql.Hosting" Version="1.5.27.1" />
     <PackageVersion Include="Alba.CsConsoleFormat" Version="1.0.0" />
@@ -11,7 +11,7 @@
   </ItemGroup>
   <!-- Test dependencies -->
   <ItemGroup>
-    <PackageVersion Include="Akka.Persistence.Query.InMemory" Version="1.5.27.1" />
+    <PackageVersion Include="Akka.Persistence.Query.InMemory" Version="1.5.32" />
     <PackageVersion Include="Akka.Hosting.TestKit" Version="1.5.27" />
     <PackageVersion Include="Akka.Persistence.TestKit" Version="1.5.27.1" />
     <PackageVersion Include="Akka.Persistence.TestKit.Xunit2" Version="1.5.27.1" />
