@@ -7,7 +7,7 @@
     <PackageVersion Include="Akka.Persistence.MongoDb.Hosting" Version="1.5.26" />
     <PackageVersion Include="Akka.Persistence.Sql.Hosting" Version="1.5.27.1" />
     <PackageVersion Include="Alba.CsConsoleFormat" Version="1.0.0" />
-    <PackageVersion Include="Npgsql" Version="8.0.3" />
+    <PackageVersion Include="Npgsql" Version="9.0.2" />
   </ItemGroup>
   <!-- Test dependencies -->
   <ItemGroup>
